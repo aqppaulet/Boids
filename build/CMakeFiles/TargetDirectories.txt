@@ -1,0 +1,3 @@
+C:/Users/PEPEPAREDES/Documents/Codex/2026-06-27/implementaci-n-indicaciones-1-implementar-una/outputs/boids_lab10_start/build/CMakeFiles/Lab10Boids.dir
+C:/Users/PEPEPAREDES/Documents/Codex/2026-06-27/implementaci-n-indicaciones-1-implementar-una/outputs/boids_lab10_start/build/CMakeFiles/edit_cache.dir
+C:/Users/PEPEPAREDES/Documents/Codex/2026-06-27/implementaci-n-indicaciones-1-implementar-una/outputs/boids_lab10_start/build/CMakeFiles/rebuild_cache.dir
