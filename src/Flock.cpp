@@ -88,6 +88,87 @@ void wrapPosition(Vec3& position, const Bounds& bounds, SpaceMode mode) {
         position.z = 0.0f;
     }
 }
+
+struct NeighborSummary {
+    Vec3 separationDirection;
+    Vec3 averageVelocity;
+    Vec3 centerOfMass;
+    int separationCount{0};
+    int neighborCount{0};
+};
+
+NeighborSummary collectNeighbors(
+    const std::vector<Boid>& boids,
+    std::size_t currentIndex,
+    const SimulationSettings& settings,
+    SpaceMode mode
+) {
+    NeighborSummary summary;
+    const Boid& boid = boids[currentIndex];
+
+    for (std::size_t i = 0; i < boids.size(); ++i) {
+        if (i == currentIndex) {
+            continue;
+        }
+
+        Vec3 offset = boid.position - boids[i].position;
+        if (mode == SpaceMode::TwoD) {
+            keep2D(offset);
+        }
+
+        const float distance = offset.length();
+        if (distance > settings.neighborRadius || distance <= EPSILON) {
+            continue;
+        }
+
+        summary.averageVelocity += boids[i].velocity;
+        summary.centerOfMass += boids[i].position;
+        ++summary.neighborCount;
+
+        if (distance < settings.separationRadius) {
+            summary.separationDirection += offset.normalized() / distance;
+            ++summary.separationCount;
+        }
+    }
+
+    return summary;
+}
+
+Vec3 separationRule(const Boid& boid, const NeighborSummary& summary, const SimulationSettings& settings) {
+    if (summary.separationCount == 0) {
+        return Vec3();
+    }
+
+    return steerTowards(boid, summary.separationDirection, settings);
+}
+
+Vec3 alignmentRule(const Boid& boid, const NeighborSummary& summary, const SimulationSettings& settings) {
+    if (summary.neighborCount == 0) {
+        return Vec3();
+    }
+
+    const Vec3 averageVelocity = summary.averageVelocity / static_cast<float>(summary.neighborCount);
+    return steerTowards(boid, averageVelocity, settings);
+}
+
+Vec3 cohesionRule(const Boid& boid, const NeighborSummary& summary, const SimulationSettings& settings) {
+    if (summary.neighborCount == 0) {
+        return Vec3();
+    }
+
+    const Vec3 centerOfMass = summary.centerOfMass / static_cast<float>(summary.neighborCount);
+    return steerTowards(boid, centerOfMass - boid.position, settings);
+}
+
+Vec3 combineRules(const Boid& boid, const NeighborSummary& summary, const SimulationSettings& settings) {
+    const Vec3 separation = separationRule(boid, summary, settings);
+    const Vec3 alignment = alignmentRule(boid, summary, settings);
+    const Vec3 cohesion = cohesionRule(boid, summary, settings);
+
+    return separation * settings.separationWeight
+        + alignment * settings.alignmentWeight
+        + cohesion * settings.cohesionWeight;
+}
 }
 
 void Flock::initialize(std::size_t count, const Bounds& bounds, SpaceMode mode) {
@@ -124,51 +205,8 @@ void Flock::update(float deltaTime, const Bounds& bounds, const SimulationSettin
 
     for (std::size_t i = 0; i < boids_.size(); ++i) {
         const Boid& boid = boids_[i];
-
-        Vec3 separationDirection;
-        Vec3 averageVelocity;
-        Vec3 centerOfMass;
-        int separationCount = 0;
-        int neighborCount = 0;
-
-        for (std::size_t j = 0; j < boids_.size(); ++j) {
-            if (i == j) {
-                continue;
-            }
-
-            Vec3 offset = boid.position - boids_[j].position;
-            if (mode == SpaceMode::TwoD) {
-                keep2D(offset);
-            }
-
-            const float distance = offset.length();
-            if (distance > settings.neighborRadius || distance <= EPSILON) {
-                continue;
-            }
-
-            averageVelocity += boids_[j].velocity;
-            centerOfMass += boids_[j].position;
-            ++neighborCount;
-
-            if (distance < settings.separationRadius) {
-                separationDirection += offset.normalized() / distance;
-                ++separationCount;
-            }
-        }
-
-        Vec3 acceleration;
-
-        if (separationCount > 0) {
-            acceleration += steerTowards(boid, separationDirection, settings) * settings.separationWeight;
-        }
-
-        if (neighborCount > 0) {
-            averageVelocity = averageVelocity / static_cast<float>(neighborCount);
-            centerOfMass = centerOfMass / static_cast<float>(neighborCount);
-
-            acceleration += steerTowards(boid, averageVelocity, settings) * settings.alignmentWeight;
-            acceleration += steerTowards(boid, centerOfMass - boid.position, settings) * settings.cohesionWeight;
-        }
+        const NeighborSummary neighbors = collectNeighbors(boids_, i, settings, mode);
+        Vec3 acceleration = combineRules(boid, neighbors, settings);
 
         if (mode == SpaceMode::TwoD) {
             keep2D(acceleration);

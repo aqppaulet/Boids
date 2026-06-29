@@ -48,3 +48,11 @@ ejes de colores ayudan a notar la profundidad.
 
 Los pesos de las reglas se pueden modificar en `include/Config.h`, dentro de
 `SIMULATION`.
+
+La combinacion del comportamiento colectivo se realiza en `src/Flock.cpp`:
+
+```cpp
+separacion * separationWeight
++ alineamiento * alignmentWeight
++ cohesion * cohesionWeight
+```
