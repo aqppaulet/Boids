@@ -34,11 +34,11 @@ Vec3 limitLength(const Vec3& vector, float maxLength) {
     return vector.normalized() * maxLength;
 }
 
-Vec3 clampSpeed(const Vec3& velocity, float minSpeed, float maxSpeed) {
+Vec3 applySpeedLimits(const Vec3& velocity, float minSpeed, float maxSpeed) {
     const float speed = velocity.length();
 
     if (speed <= EPSILON) {
-        return Vec3(maxSpeed, 0.0f, 0.0f);
+        return Vec3(minSpeed, 0.0f, 0.0f);
     }
 
     if (speed < minSpeed) {
@@ -212,7 +212,7 @@ void Flock::update(float deltaTime, const Bounds& bounds, const SimulationSettin
             keep2D(acceleration);
         }
 
-        nextVelocities[i] = clampSpeed(
+        nextVelocities[i] = applySpeedLimits(
             boid.velocity + acceleration * deltaTime,
             settings.minSpeed,
             settings.maxSpeed

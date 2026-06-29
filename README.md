@@ -6,6 +6,8 @@ Este proyecto implementa los primeros puntos del laboratorio:
 2. Inicializacion de 50 boids en posiciones aleatorias dentro de la ventana.
 3. Representacion visual con orientacion igual a la direccion de movimiento.
 4. Movimiento continuo y reglas de separacion, alineamiento y cohesion.
+5. Combinacion ponderada de las tres reglas.
+6. Limites de velocidad minima y maxima.
 
 El codigo usa `Vec3` desde el inicio para que el paso de 2D a 3D sea simple.
 El modo de visualizacion se controla desde `include/Config.h`:
@@ -55,4 +57,11 @@ La combinacion del comportamiento colectivo se realiza en `src/Flock.cpp`:
 separacion * separationWeight
 + alineamiento * alignmentWeight
 + cohesion * cohesionWeight
+```
+
+Los limites de velocidad tambien se ajustan en `include/Config.h`:
+
+```cpp
+8.0f,   // minSpeed
+22.0f,  // maxSpeed
 ```
