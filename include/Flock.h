@@ -10,6 +10,11 @@ enum class SpaceMode {
     ThreeD
 };
 
+enum class BoundaryMode {
+    Bounce,
+    Toroidal
+};
+
 struct Bounds {
     float minX{-50.0f};
     float maxX{50.0f};
@@ -35,7 +40,13 @@ struct SimulationSettings {
 class Flock {
 public:
     void initialize(std::size_t count, const Bounds& bounds, SpaceMode mode);
-    void update(float deltaTime, const Bounds& bounds, const SimulationSettings& settings, SpaceMode mode);
+    void update(
+        float deltaTime,
+        const Bounds& bounds,
+        const SimulationSettings& settings,
+        SpaceMode mode,
+        BoundaryMode boundaryMode
+    );
 
     const std::vector<Boid>& boids() const {
         return boids_;

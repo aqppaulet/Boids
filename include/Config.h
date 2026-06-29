@@ -10,6 +10,7 @@ inline constexpr float BOID_SIZE = 3.2f;
 inline constexpr float PI = 3.1415926535f;
 
 inline constexpr bool USE_3D = false;
+inline constexpr BoundaryMode BOUNDARY_MODE = BoundaryMode::Bounce; // toroidal or bounce   
 
 inline const SimulationSettings SIMULATION{
     5.0f,  // neighborRadius

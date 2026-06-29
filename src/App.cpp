@@ -92,6 +92,12 @@ void App::idle() {
         deltaTime = 0.05f;
     }
 
-    flock_.update(deltaTime, Config::WORLD_BOUNDS, Config::SIMULATION, mode_);
+    flock_.update(
+        deltaTime,
+        Config::WORLD_BOUNDS,
+        Config::SIMULATION,
+        mode_,
+        Config::BOUNDARY_MODE
+    );
     glutPostRedisplay();
 }

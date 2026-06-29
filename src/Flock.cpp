@@ -65,27 +65,58 @@ void keep2D(Vec3& vector) {
     vector.z = 0.0f;
 }
 
-void wrapPosition(Vec3& position, const Bounds& bounds, SpaceMode mode) {
-    if (position.x < bounds.minX) {
-        position.x = bounds.maxX;
-    } else if (position.x > bounds.maxX) {
-        position.x = bounds.minX;
+void wrapAxis(float& position, float minValue, float maxValue) {
+    if (position < minValue) {
+        position = maxValue;
+    } else if (position > maxValue) {
+        position = minValue;
     }
+}
 
-    if (position.y < bounds.minY) {
-        position.y = bounds.maxY;
-    } else if (position.y > bounds.maxY) {
-        position.y = bounds.minY;
+void bounceAxis(float& position, float& velocity, float minValue, float maxValue) {
+    if (position < minValue) {
+        position = minValue;
+        velocity = std::fabs(velocity);
+    } else if (position > maxValue) {
+        position = maxValue;
+        velocity = -std::fabs(velocity);
     }
+}
+
+void applyToroidalBoundary(Vec3& position, const Bounds& bounds, SpaceMode mode) {
+    wrapAxis(position.x, bounds.minX, bounds.maxX);
+    wrapAxis(position.y, bounds.minY, bounds.maxY);
 
     if (mode == SpaceMode::ThreeD) {
-        if (position.z < bounds.minZ) {
-            position.z = bounds.maxZ;
-        } else if (position.z > bounds.maxZ) {
-            position.z = bounds.minZ;
-        }
+        wrapAxis(position.z, bounds.minZ, bounds.maxZ);
     } else {
         position.z = 0.0f;
+    }
+}
+
+void applyBounceBoundary(Vec3& position, Vec3& velocity, const Bounds& bounds, SpaceMode mode) {
+    bounceAxis(position.x, velocity.x, bounds.minX, bounds.maxX);
+    bounceAxis(position.y, velocity.y, bounds.minY, bounds.maxY);
+
+    if (mode == SpaceMode::ThreeD) {
+        bounceAxis(position.z, velocity.z, bounds.minZ, bounds.maxZ);
+    } else {
+        position.z = 0.0f;
+        velocity.z = 0.0f;
+    }
+}
+
+void applyBoundary(
+    Vec3& position,
+    Vec3& velocity,
+    const Bounds& bounds,
+    SpaceMode mode,
+    BoundaryMode boundaryMode
+) {
+    if (boundaryMode == BoundaryMode::Bounce) {
+        applyBounceBoundary(position, velocity, bounds, mode);
+    } else {
+        applyToroidalBoundary(position, bounds, mode);
     }
 }
 
@@ -196,7 +227,13 @@ void Flock::initialize(std::size_t count, const Bounds& bounds, SpaceMode mode) 
     }
 }
 
-void Flock::update(float deltaTime, const Bounds& bounds, const SimulationSettings& settings, SpaceMode mode) {
+void Flock::update(
+    float deltaTime,
+    const Bounds& bounds,
+    const SimulationSettings& settings,
+    SpaceMode mode,
+    BoundaryMode boundaryMode
+) {
     if (boids_.empty() || deltaTime <= 0.0f) {
         return;
     }
@@ -228,7 +265,7 @@ void Flock::update(float deltaTime, const Bounds& bounds, const SimulationSettin
 
         boid.velocity = nextVelocities[i];
         boid.position += boid.velocity * deltaTime;
-        wrapPosition(boid.position, bounds, mode);
+        applyBoundary(boid.position, boid.velocity, bounds, mode, boundaryMode);
         boid.direction = boid.velocity.normalized();
     }
 }

@@ -8,6 +8,7 @@ Este proyecto implementa los primeros puntos del laboratorio:
 4. Movimiento continuo y reglas de separacion, alineamiento y cohesion.
 5. Combinacion ponderada de las tres reglas.
 6. Limites de velocidad minima y maxima.
+7. Comportamiento en bordes: rebote o mundo toroidal.
 
 El codigo usa `Vec3` desde el inicio para que el paso de 2D a 3D sea simple.
 El modo de visualizacion se controla desde `include/Config.h`:
@@ -20,6 +21,18 @@ Cambia ese valor a `true` para usar posiciones y dibujo 3D:
 
 ```cpp
 inline constexpr bool USE_3D = true;
+```
+
+El comportamiento en los bordes tambien se controla desde `include/Config.h`:
+
+```cpp
+inline constexpr BoundaryMode BOUNDARY_MODE = BoundaryMode::Toroidal;
+```
+
+Puedes cambiarlo por:
+
+```cpp
+inline constexpr BoundaryMode BOUNDARY_MODE = BoundaryMode::Bounce;
 ```
 
 ## Compilar con CMake
