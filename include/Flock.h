@@ -19,9 +19,23 @@ struct Bounds {
     float maxZ{0.0f};
 };
 
+struct SimulationSettings {
+    float neighborRadius{14.0f};
+    float separationRadius{6.0f};
+
+    float separationWeight{2.0f};
+    float alignmentWeight{0.9f};
+    float cohesionWeight{0.7f};
+
+    float minSpeed{8.0f};
+    float maxSpeed{22.0f};
+    float maxForce{18.0f};
+};
+
 class Flock {
 public:
     void initialize(std::size_t count, const Bounds& bounds, SpaceMode mode);
+    void update(float deltaTime, const Bounds& bounds, const SimulationSettings& settings, SpaceMode mode);
 
     const std::vector<Boid>& boids() const {
         return boids_;

@@ -11,6 +11,17 @@ inline constexpr float PI = 3.1415926535f;
 
 inline constexpr bool USE_3D = false;
 
+inline const SimulationSettings SIMULATION{
+    14.0f,  // neighborRadius
+    6.0f,   // separationRadius
+    2.0f,   // separationWeight
+    0.9f,   // alignmentWeight
+    0.7f,   // cohesionWeight
+    8.0f,   // minSpeed
+    22.0f,  // maxSpeed
+    18.0f   // maxForce
+};
+
 inline const Bounds WORLD_BOUNDS{
     -50.0f, 50.0f,
     -35.0f, 35.0f,

@@ -25,8 +25,37 @@ struct Vec3 {
         return Vec3(x * scalar, y * scalar, z * scalar);
     }
 
+    Vec3 operator/(float scalar) const {
+        return Vec3(x / scalar, y / scalar, z / scalar);
+    }
+
+    Vec3& operator+=(const Vec3& other) {
+        x += other.x;
+        y += other.y;
+        z += other.z;
+        return *this;
+    }
+
+    Vec3& operator-=(const Vec3& other) {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+        return *this;
+    }
+
+    Vec3& operator*=(float scalar) {
+        x *= scalar;
+        y *= scalar;
+        z *= scalar;
+        return *this;
+    }
+
+    float lengthSquared() const {
+        return x * x + y * y + z * z;
+    }
+
     float length() const {
-        return std::sqrt(x * x + y * y + z * z);
+        return std::sqrt(lengthSquared());
     }
 
     Vec3 normalized() const {

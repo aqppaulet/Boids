@@ -24,10 +24,13 @@ void App::run(int argc, char** argv) {
 
     renderer_.initializeOpenGL();
     renderer_.configureProjection(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT);
+    lastUpdateTime_ = glutGet(GLUT_ELAPSED_TIME);
 
     glutDisplayFunc(displayCallback);
     glutReshapeFunc(reshapeCallback);
     glutKeyboardFunc(keyboardCallback);
+    glutMouseFunc(mouseCallback);
+    glutMotionFunc(motionCallback);
     glutIdleFunc(idleCallback);
 
     glutMainLoop();
@@ -43,6 +46,14 @@ void App::reshapeCallback(int width, int height) {
 
 void App::keyboardCallback(unsigned char key, int, int) {
     instance_->keyboard(key);
+}
+
+void App::mouseCallback(int button, int state, int x, int y) {
+    instance_->mouse(button, state, x, y);
+}
+
+void App::motionCallback(int x, int y) {
+    instance_->motion(x, y);
 }
 
 void App::idleCallback() {
@@ -64,6 +75,23 @@ void App::keyboard(unsigned char key) {
     }
 }
 
+void App::mouse(int button, int state, int x, int y) {
+    renderer_.handleMouseButton(button, state, x, y);
+}
+
+void App::motion(int x, int y) {
+    renderer_.handleMouseMove(x, y);
+}
+
 void App::idle() {
-    renderer_.updateCamera();
+    const int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    float deltaTime = static_cast<float>(currentTime - lastUpdateTime_) / 1000.0f;
+    lastUpdateTime_ = currentTime;
+
+    if (deltaTime > 0.05f) {
+        deltaTime = 0.05f;
+    }
+
+    flock_.update(deltaTime, Config::WORLD_BOUNDS, Config::SIMULATION, mode_);
+    glutPostRedisplay();
 }

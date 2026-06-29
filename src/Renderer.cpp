@@ -54,15 +54,44 @@ void Renderer::display(const Flock& flock) const {
     glutSwapBuffers();
 }
 
-void Renderer::updateCamera() {
+void Renderer::handleMouseButton(int button, int state, int x, int y) {
     if (!is3D()) {
         return;
     }
 
-    cameraAngle_ += 0.08f;
-    if (cameraAngle_ >= 360.0f) {
-        cameraAngle_ -= 360.0f;
+    if (button == GLUT_LEFT_BUTTON) {
+        draggingCamera_ = state == GLUT_DOWN;
+        lastMouseX_ = x;
+        lastMouseY_ = y;
+        return;
     }
+
+    if (state != GLUT_DOWN) {
+        return;
+    }
+
+    if (button == 3) {
+        cameraDistance_ = clamp(cameraDistance_ - 6.0f, 45.0f, 190.0f);
+        glutPostRedisplay();
+    } else if (button == 4) {
+        cameraDistance_ = clamp(cameraDistance_ + 6.0f, 45.0f, 190.0f);
+        glutPostRedisplay();
+    }
+}
+
+void Renderer::handleMouseMove(int x, int y) {
+    if (!is3D() || !draggingCamera_) {
+        return;
+    }
+
+    const int deltaX = x - lastMouseX_;
+    const int deltaY = y - lastMouseY_;
+    lastMouseX_ = x;
+    lastMouseY_ = y;
+
+    cameraYaw_ += static_cast<float>(deltaX) * 0.35f;
+    cameraPitch_ += static_cast<float>(deltaY) * 0.35f;
+    cameraPitch_ = clamp(cameraPitch_, -80.0f, 80.0f);
 
     glutPostRedisplay();
 }
@@ -75,12 +104,27 @@ float Renderer::toDegrees(float radians) const {
     return radians * 180.0f / Config::PI;
 }
 
-void Renderer::configureCamera() const {
-    const float angle = cameraAngle_ * Config::PI / 180.0f;
-    const float cameraX = std::cos(angle) * 95.0f;
-    const float cameraY = std::sin(angle) * 95.0f;
+float Renderer::clamp(float value, float minValue, float maxValue) const {
+    if (value < minValue) {
+        return minValue;
+    }
 
-    gluLookAt(cameraX, cameraY, 70.0,
+    if (value > maxValue) {
+        return maxValue;
+    }
+
+    return value;
+}
+
+void Renderer::configureCamera() const {
+    const float yaw = cameraYaw_ * Config::PI / 180.0f;
+    const float pitch = cameraPitch_ * Config::PI / 180.0f;
+
+    const float cameraX = std::cos(pitch) * std::cos(yaw) * cameraDistance_;
+    const float cameraY = std::cos(pitch) * std::sin(yaw) * cameraDistance_;
+    const float cameraZ = std::sin(pitch) * cameraDistance_;
+
+    gluLookAt(cameraX, cameraY, cameraZ,
               0.0, 0.0, 0.0,
               0.0, 0.0, 1.0);
 }
