@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include <cmath>
+#include <cstdio>
 
 #include <GL/glut.h>
 
@@ -15,8 +16,11 @@ void Renderer::initializeOpenGL() const {
     glEnable(GL_DEPTH_TEST);
 }
 
-void Renderer::configureProjection(int width, int height) const {
-    const float aspect = static_cast<float>(width) / static_cast<float>(height == 0 ? 1 : height);
+void Renderer::configureProjection(int width, int height) {
+    viewportWidth_ = width > 0 ? width : 1;
+    viewportHeight_ = height > 0 ? height : 1;
+
+    const float aspect = static_cast<float>(viewportWidth_) / static_cast<float>(viewportHeight_);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -32,7 +36,7 @@ void Renderer::configureProjection(int width, int height) const {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Renderer::display(const Flock& flock) const {
+void Renderer::display(const Flock& flock, const SimulationSettings& settings) const {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
@@ -46,11 +50,16 @@ void Renderer::display(const Flock& flock) const {
         if (is3D()) {
             drawBoid3D(boid);
         } else {
-            glColor3f(0.12f, 0.75f, 0.95f);
+            if (boid.highlightTime > 0.0f) {
+                glColor3f(1.0f, 0.88f, 0.08f);
+            } else {
+                glColor3f(0.12f, 0.75f, 0.95f);
+            }
             drawBoid2D(boid);
         }
     }
 
+    drawHud(flock, settings);
     glutSwapBuffers();
 }
 
@@ -150,6 +159,7 @@ void Renderer::drawBoid3D(const Boid& boid) const {
     const float yaw = toDegrees(std::atan2(direction.y, direction.x));
     const float xyLength = std::sqrt(direction.x * direction.x + direction.y * direction.y);
     const float pitch = toDegrees(std::atan2(direction.z, xyLength));
+    const bool highlighted = boid.highlightTime > 0.0f;
 
     glPushMatrix();
     glTranslatef(boid.position.x, boid.position.y, boid.position.z);
@@ -161,28 +171,48 @@ void Renderer::drawBoid3D(const Boid& boid) const {
     const float width = Config::BOID_SIZE * 0.45f;
 
     glBegin(GL_TRIANGLES);
-        glColor3f(0.10f, 0.90f, 1.0f);
+        if (highlighted) {
+            glColor3f(1.0f, 0.95f, 0.12f);
+        } else {
+            glColor3f(0.10f, 0.90f, 1.0f);
+        }
         glVertex3f(nose, 0.0f, 0.0f);
         glVertex3f(tail, width, width);
         glVertex3f(tail, -width, width);
 
-        glColor3f(0.05f, 0.56f, 0.95f);
+        if (highlighted) {
+            glColor3f(1.0f, 0.78f, 0.05f);
+        } else {
+            glColor3f(0.05f, 0.56f, 0.95f);
+        }
         glVertex3f(nose, 0.0f, 0.0f);
         glVertex3f(tail, -width, width);
         glVertex3f(tail, -width, -width);
 
-        glColor3f(0.02f, 0.32f, 0.78f);
+        if (highlighted) {
+            glColor3f(0.95f, 0.58f, 0.02f);
+        } else {
+            glColor3f(0.02f, 0.32f, 0.78f);
+        }
         glVertex3f(nose, 0.0f, 0.0f);
         glVertex3f(tail, -width, -width);
         glVertex3f(tail, width, -width);
 
-        glColor3f(0.48f, 0.98f, 1.0f);
+        if (highlighted) {
+            glColor3f(1.0f, 0.90f, 0.20f);
+        } else {
+            glColor3f(0.48f, 0.98f, 1.0f);
+        }
         glVertex3f(nose, 0.0f, 0.0f);
         glVertex3f(tail, width, -width);
         glVertex3f(tail, width, width);
     glEnd();
 
-    glColor3f(0.86f, 0.96f, 1.0f);
+    if (highlighted) {
+        glColor3f(1.0f, 0.98f, 0.55f);
+    } else {
+        glColor3f(0.86f, 0.96f, 1.0f);
+    }
     glBegin(GL_LINE_LOOP);
         glVertex3f(tail, width, width);
         glVertex3f(tail, -width, width);
@@ -241,4 +271,64 @@ void Renderer::drawAxes() const {
         glVertex3f(0.0f, 0.0f, 33.0f);
     glEnd();
     glLineWidth(1.0f);
+}
+
+void Renderer::drawHud(const Flock& flock, const SimulationSettings& settings) const {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0.0, viewportWidth_, 0.0, viewportHeight_);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glColor3f(0.88f, 0.94f, 1.0f);
+
+    char text[160];
+    const float x = 12.0f;
+    float y = static_cast<float>(viewportHeight_) - 20.0f;
+    const float lineHeight = 16.0f;
+
+    std::snprintf(text, sizeof(text), "Boids: %zu  [1/2]", flock.boids().size());
+    drawText(x, y, text);
+    y -= lineHeight;
+
+    std::snprintf(text, sizeof(text), "Vecindad: %.1f  [3/4]", settings.neighborRadius);
+    drawText(x, y, text);
+    y -= lineHeight;
+
+    std::snprintf(text, sizeof(text), "Separacion: %.1f  [5/6]", settings.separationWeight);
+    drawText(x, y, text);
+    y -= lineHeight;
+
+    std::snprintf(text, sizeof(text), "Alineamiento: %.1f  [7/8]", settings.alignmentWeight);
+    drawText(x, y, text);
+    y -= lineHeight;
+
+    std::snprintf(text, sizeof(text), "Cohesion: %.1f  [9/0]", settings.cohesionWeight);
+    drawText(x, y, text);
+    y -= lineHeight;
+
+    drawText(x, y, "Esc: salir");
+
+    glPopAttrib();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void Renderer::drawText(float x, float y, const char* text) const {
+    glRasterPos2f(x, y);
+
+    for (const char* character = text; *character != '\0'; ++character) {
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *character);
+    }
 }

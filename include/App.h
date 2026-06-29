@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "Flock.h"
 #include "Renderer.h"
 
@@ -23,8 +25,11 @@ private:
     void mouse(int button, int state, int x, int y);
     void motion(int x, int y);
     void idle();
+    void adjustBoidCount(int delta);
 
     Flock flock_;
+    SimulationSettings settings_;
+    std::size_t boidCount_{0};
     SpaceMode mode_;
     Renderer renderer_;
     int lastUpdateTime_{0};

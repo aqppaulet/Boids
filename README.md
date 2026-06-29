@@ -55,6 +55,11 @@ g++ src/*.cpp -Iinclude -lfreeglut -lopengl32 -lglu32 -o Lab10Boids.exe
 ## Controles
 
 - `Esc`: salir.
+- `1` / `2`: disminuir / aumentar numero de boids.
+- `3` / `4`: disminuir / aumentar distancia de vecindad.
+- `5` / `6`: disminuir / aumentar intensidad de separacion.
+- `7` / `8`: disminuir / aumentar intensidad de alineamiento.
+- `9` / `0`: disminuir / aumentar intensidad de cohesion.
 - En modo 3D, arrastrar con click izquierdo: rotar camara.
 - En modo 3D, rueda del mouse: acercar o alejar.
 
@@ -63,6 +68,13 @@ ejes de colores ayudan a notar la profundidad.
 
 Los pesos de las reglas se pueden modificar en `include/Config.h`, dentro de
 `SIMULATION`.
+
+Los boids que se agregan durante la ejecucion aparecen en amarillo por unos
+segundos. La duracion se controla desde `include/Config.h`:
+
+```cpp
+inline constexpr float NEW_BOID_HIGHLIGHT_SECONDS = 2.0f;
+```
 
 La combinacion del comportamiento colectivo se realiza en `src/Flock.cpp`:
 

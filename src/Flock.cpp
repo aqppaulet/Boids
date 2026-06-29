@@ -200,6 +200,26 @@ Vec3 combineRules(const Boid& boid, const NeighborSummary& summary, const Simula
         + alignment * settings.alignmentWeight
         + cohesion * settings.cohesionWeight;
 }
+
+Boid createRandomBoid(
+    std::mt19937& generator,
+    const Bounds& bounds,
+    SpaceMode mode,
+    float highlightTime
+) {
+    const Vec3 position(
+        randomFloat(generator, bounds.minX, bounds.maxX),
+        randomFloat(generator, bounds.minY, bounds.maxY),
+        mode == SpaceMode::ThreeD ? randomFloat(generator, bounds.minZ, bounds.maxZ) : 0.0f
+    );
+
+    const Vec3 direction = mode == SpaceMode::ThreeD
+        ? randomDirection3D(generator)
+        : randomDirection2D(generator);
+
+    const float speed = randomFloat(generator, 10.0f, 18.0f);
+    return Boid(position, direction * speed, highlightTime);
+}
 }
 
 void Flock::initialize(std::size_t count, const Bounds& bounds, SpaceMode mode) {
@@ -210,20 +230,22 @@ void Flock::initialize(std::size_t count, const Bounds& bounds, SpaceMode mode) 
     boids_.reserve(count);
 
     for (std::size_t i = 0; i < count; ++i) {
-        const Vec3 position(
-            randomFloat(generator, bounds.minX, bounds.maxX),
-            randomFloat(generator, bounds.minY, bounds.maxY),
-            mode == SpaceMode::ThreeD ? randomFloat(generator, bounds.minZ, bounds.maxZ) : 0.0f
-        );
+        boids_.push_back(createRandomBoid(generator, bounds, mode, 0.0f));
+    }
+}
 
-        const Vec3 direction = mode == SpaceMode::ThreeD
-            ? randomDirection3D(generator)
-            : randomDirection2D(generator);
+void Flock::setCount(std::size_t count, const Bounds& bounds, SpaceMode mode, float newBoidHighlightTime) {
+    if (count <= boids_.size()) {
+        boids_.resize(count);
+        return;
+    }
 
-        const float speed = randomFloat(generator, 10.0f, 18.0f);
-        const Vec3 velocity = direction * speed;
+    std::random_device randomDevice;
+    std::mt19937 generator(randomDevice());
 
-        boids_.push_back(Boid(position, velocity));
+    boids_.reserve(count);
+    while (boids_.size() < count) {
+        boids_.push_back(createRandomBoid(generator, bounds, mode, newBoidHighlightTime));
     }
 }
 
@@ -267,5 +289,12 @@ void Flock::update(
         boid.position += boid.velocity * deltaTime;
         applyBoundary(boid.position, boid.velocity, bounds, mode, boundaryMode);
         boid.direction = boid.velocity.normalized();
+
+        if (boid.highlightTime > 0.0f) {
+            boid.highlightTime -= deltaTime;
+            if (boid.highlightTime < 0.0f) {
+                boid.highlightTime = 0.0f;
+            }
+        }
     }
 }

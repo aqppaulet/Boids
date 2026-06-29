@@ -7,8 +7,8 @@ public:
     Renderer(const Bounds& bounds, SpaceMode mode);
 
     void initializeOpenGL() const;
-    void configureProjection(int width, int height) const;
-    void display(const Flock& flock) const;
+    void configureProjection(int width, int height);
+    void display(const Flock& flock, const SimulationSettings& settings) const;
     void handleMouseButton(int button, int state, int x, int y);
     void handleMouseMove(int x, int y);
 
@@ -21,10 +21,14 @@ private:
     void drawBoid3D(const Boid& boid) const;
     void drawWorldBox() const;
     void drawAxes() const;
+    void drawHud(const Flock& flock, const SimulationSettings& settings) const;
+    void drawText(float x, float y, const char* text) const;
     void configureCamera() const;
 
     Bounds bounds_;
     SpaceMode mode_;
+    int viewportWidth_{900};
+    int viewportHeight_{650};
     float cameraYaw_{35.0f};
     float cameraPitch_{34.0f};
     float cameraDistance_{115.0f};

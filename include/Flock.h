@@ -40,6 +40,7 @@ struct SimulationSettings {
 class Flock {
 public:
     void initialize(std::size_t count, const Bounds& bounds, SpaceMode mode);
+    void setCount(std::size_t count, const Bounds& bounds, SpaceMode mode, float newBoidHighlightTime);
     void update(
         float deltaTime,
         const Bounds& bounds,
